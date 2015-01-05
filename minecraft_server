@@ -1,0 +1,170 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:       minecraft_server
+# Required-Start: $remote_fs $syslog
+# Required-Stop:  $remote_fs $syslog
+# Default-Start:  2 3 4 5
+# Default-Stop:   0 1 6
+# chkconfig:      345 50 50
+# Description:    Minecraft Server Control Script
+### END INIT INFO
+
+MC_USER=minecraft       # User name running the minecraft server
+MC_PROC=minecraft.jar   # name of minecraft jar file
+MC_DIR=/home/minecraft/server # Directory where the server should run
+
+USAGE=$(cat <<EOF
+Usage:  $0 <option>
+
+Options:
+
+  start
+    Start the Minecraft server.
+
+  stop
+    Stop the Minecraft server.
+
+  restart
+    Restart the Minecraft server.
+
+  create <version> 
+    Create a minecraft server, version is the version of minecraft you want to use.
+    latest gives the latest version. Does not clean other files in the directory
+
+  status
+    Give the status of the server
+
+  send <command>
+    Sends a command to the Minecraft server
+
+  console
+    Opens a console to the Minecraft server
+
+  backup
+    Makes a backup of the world
+EOF
+)
+
+#
+# get the PID for minecraft server pocess
+#
+
+getPID() {
+  local PID
+  PID=$( ps -f -u $MC_USER | grep $MC_PROC | grep -v grep | awk '{print $2}' )
+  printf "%d\n" $PID
+}
+
+#
+# return 1 if the minecraft server is running othervise 0
+#
+
+isRunning() {
+  getPID | grep -q '0'
+  echo $?
+}
+
+# execute command as minecraft user
+
+execCMD() {
+	# if running as root, switch to defined user
+
+	if [ $(id -u) -eq 0 ]; then
+		su -s /bin/sh -c "$1" $MC_USER
+	else
+		sh -c "$1"
+	fi
+}
+
+# 
+# check that all is ok the start server
+#
+
+checkOK() {
+
+  # check that the directory exists
+
+  if [ ! -d $MC_DIR ] ; then
+	echo "$MC_DIR does not exist" ;
+	exit 1
+  fi
+
+  # and there are an minecraft.jar file in it
+
+  if [ ! -f $MC_DIR/$MC_PROC ] ; then
+	echo "the minecraftfile $MC_DIR/$MC_PROC does not exist."
+	exit 1
+  fi 
+
+  # check to see that minecraft user can write in the
+
+  execCMD "touch $MC_DIR/testfile 2> /dev/null"
+  if [ ! -f $MC_DIR/testfile ] ; then
+	echo "the user $MC_USER has not write access to directory $MC_DIR"
+	exit 1
+  fi
+
+}
+	
+#
+# start the minecraft server
+#
+
+start() {
+   echo -n "Starting minecraft server as user $MC_USER..."
+   checkOK 
+
+   echo
+}
+
+case "$1" in
+
+  start)
+    if [ $(isRunning) -eq 1 ] ; then
+
+	echo -n "$MC_PROC is already running with PID "
+        getPID
+	exit 1
+
+    fi
+    start
+  ;;
+
+  stop)
+
+  ;;
+
+  restart)
+
+     stop
+     start
+  ;;
+
+  create)
+
+  ;;
+
+  status)
+
+  ;;
+
+  send)
+
+  ;;
+
+  console)
+
+  ;;
+
+  backup)
+
+  ;;
+
+  *)
+    printf "$USAGE\n"
+    exit 1
+  ;;
+
+esac
+
+exit 0
