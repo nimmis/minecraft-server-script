@@ -21,6 +21,9 @@ Options:
   status
     Give the status of the server
 
+  accept-eula
+    Accepts Mojangs EULA and set eula.txt correct
+
   send <command>
     Sends a command to the Minecraft server
 
